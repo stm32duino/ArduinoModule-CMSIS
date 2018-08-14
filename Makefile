@@ -24,13 +24,12 @@ SHELL = /bin/sh
 
 ROOT_PATH := .
 
-#PACKAGE_NAME := $(basename $(notdir $(CURDIR)))
+OS ?=$(shell uname -s)
+
 PACKAGE_NAME := "CMSIS"
-PACKAGE_VERSION := 4.5.0
 
 # -----------------------------------------------------------------------------
 # packaging specific
-PACKAGE_FOLDER := CMSIS
 
 ifeq (postpackaging,$(findstring $(MAKECMDGOALS),postpackaging))
   PACKAGE_FILENAME=$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2
@@ -41,15 +40,19 @@ endif
 # end of packaging specific
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean print_info postpackaging
+.PHONY: all clean cmsis cmsis5 print_info postpackaging
 
 # Arduino module packaging:
 #   - exclude version control system files, here git files and folders .git, .gitattributes and .gitignore
 #   - exclude 'extras' folder
-all: clean print_info
+all: cmsis cmsis5
+
+cmsis: PACKAGE_VERSION := 4.5.0
+cmsis: PACKAGE_FOLDER := CMSIS
+cmsis: clean print_info
 	@echo ----------------------------------------------------------
 	@echo "Packaging module."
-	tar --exclude=./.gitattributes \
+	@tar --exclude=./.gitattributes \
 		--exclude=./.travis.yml \
 		--exclude=CMSIS/index.html \
 		--exclude=CMSIS/Documentation \
@@ -59,7 +62,36 @@ all: clean print_info
 		--exclude=Device/ARM/Documents \
 		--exclude=.git \
 		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
-	$(MAKE) --no-builtin-rules postpackaging -C .
+	$(MAKE) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	@echo ----------------------------------------------------------
+
+cmsis5: PACKAGE_FOLDER := CMSIS_5
+cmsis5: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags)
+cmsis5: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
+cmsis5: clean print_info
+	@echo ----------------------------------------------------------
+	@echo "Packaging module."
+	@tar --mtime='$(PACKAGE_DATE)' \
+		--exclude=docs \
+		--exclude=CMSIS/CoreValidation \
+		--exclude=CMSIS/Documentation \
+		--exclude=CMSIS/DoxyGen \
+		--exclude=CMSIS/NN/Examples \
+		--exclude=CMSIS/NN/NN_Lib_Tests \
+		--exclude=CMSIS/Pack \
+		--exclude=CMSIS/Utilities \
+		--exclude=CMSIS/DSP/DSP_Lib_TestSuite \
+		--exclude=CMSIS/DSP/Examples \
+		--exclude=CMSIS/DSP/Projects \
+		--exclude=Device/ARM/Documents \
+		--exclude=.git \
+		--exclude=.gitignore \
+		--exclude=.gitattributes \
+		--exclude=manifest \
+		--exclude=*.pdf \
+		--transform "s|CMSIS_5|CMSIS|" \
+		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
+	$(MAKE) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
 	@echo ----------------------------------------------------------
 
 clean:
@@ -74,12 +106,14 @@ print_info:
 	@echo "CURDIR              = $(CURDIR)"
 	@echo "OS                  = $(OS)"
 	@echo "SHELL               = $(SHELL)"
-	@echo "PACKAGE_VERSION     = $(PACKAGE_VERSION)"
 	@echo "PACKAGE_NAME        = $(PACKAGE_NAME)"
+	@echo "PACKAGE_FOLDER      = $(PACKAGE_FOLDER)"
+	@echo "PACKAGE_VERSION     = $(PACKAGE_VERSION)"
+
 
 postpackaging:
 	@echo "PACKAGE_CHKSUM      = $(PACKAGE_CHKSUM)"
 	@echo "PACKAGE_SIZE        = $(PACKAGE_SIZE)"
 	@echo "PACKAGE_FILENAME    = $(PACKAGE_FILENAME)"
-	cat extras/package_index.json.template | sed s/%%VERSION%%/$(PACKAGE_VERSION)/ | sed s/%%FILENAME%%/$(PACKAGE_FILENAME)/ | sed s/%%CHECKSUM%%/$(PACKAGE_CHKSUM)/ | sed s/%%SIZE%%/$(PACKAGE_SIZE)/ > package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json
+	@cat extras/package_index.json.template | sed s/%%VERSION%%/$(PACKAGE_VERSION)/ | sed s/%%FILENAME%%/$(PACKAGE_FILENAME)/ | sed s/%%CHECKSUM%%/$(PACKAGE_CHKSUM)/ | sed s/%%SIZE%%/$(PACKAGE_SIZE)/ > package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json
 	@echo "package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json created"
