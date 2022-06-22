@@ -1,8 +1,10 @@
 # ArduinoModule-CMSIS
 ARM CMSIS module for Arduino IDE
 
-Source is the one provided by ARM at https://github.com/ARM-software/CMSIS/
+Source is the one provided by ARM at:
+  * CMSIS 4 (legacy): https://github.com/ARM-software/CMSIS/
+  * CMSIS 5: https://github.com/ARM-software/CMSIS_5
 
-Main CMSIS URL is http://www.arm.com/products/processors/cortex-m/cortex-microcontroller-software-interface-standard.php
+Main CMSIS URL is https://developer.arm.com/tools-and-software/embedded/cmsis
 
-API Help can be found at http://www.keil.com/pack/doc/cmsis/general/html/index.html
+API Help can be found at https://arm-software.github.io/CMSIS_5/General/html/index.html
