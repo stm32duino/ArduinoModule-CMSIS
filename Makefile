@@ -40,30 +40,13 @@ endif
 # end of packaging specific
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean cmsis cmsis5 print_info postpackaging
+.PHONY: all clean cmsis5 print_info postpackaging
 
 # Arduino module packaging:
 #   - exclude version control system files, here git files and folders .git, .gitattributes and .gitignore
 #   - exclude 'extras' folder
-all: cmsis cmsis5
+all: cmsis5
 
-cmsis: PACKAGE_VERSION := 4.5.0
-cmsis: PACKAGE_FOLDER := CMSIS
-cmsis: clean print_info
-	@echo ----------------------------------------------------------
-	@echo "Packaging module."
-	@tar --exclude=./.gitattributes \
-		--exclude=./.travis.yml \
-		--exclude=CMSIS/index.html \
-		--exclude=CMSIS/Documentation \
-		--exclude=CMSIS/Pack \
-		--exclude=CMSIS/Utilities \
-		--exclude=CMSIS/DSP_Lib/Examples \
-		--exclude=Device/ARM/Documents \
-		--exclude=.git \
-		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
-	$(MAKE) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
-	@echo ----------------------------------------------------------
 
 cmsis5: PACKAGE_FOLDER := CMSIS_5
 cmsis5: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags)
