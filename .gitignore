@@ -1,3 +1,3 @@
 *.swp
-CMSIS-*.tar.bz2
+CMSIS*-*.tar.bz2
 package_CMSIS_*_index.json
