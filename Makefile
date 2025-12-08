@@ -26,8 +26,6 @@ ROOT_PATH := .
 
 OS ?=$(shell uname -s)
 
-PACKAGE_NAME := "CMSIS"
-
 # -----------------------------------------------------------------------------
 # packaging specific
 
@@ -40,14 +38,89 @@ endif
 # end of packaging specific
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean cmsis5 print_info postpackaging
+.PHONY: all clean cmsis5 cmsis6 cmsis_dsp cmsis_nn print_info postpackaging
 
 # Arduino module packaging:
 #   - exclude version control system files, here git files and folders .git, .gitattributes and .gitignore
 #   - exclude 'extras' folder
-all: cmsis5
+all: cmsis6 cmsis_dsp cmsis_nn
 
+cmsis6: PACKAGE_NAME := "CMSIS"
+cmsis6: PACKAGE_FOLDER := CMSIS_6
+cmsis6: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags |  sed 's/^v//')
+cmsis6: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
+cmsis6: clean print_info
+	@echo ----------------------------------------------------------
+	@echo "Packaging module."
+	@tar --mtime='$(PACKAGE_DATE)' \
+		--exclude=.github \
+		--exclude=CMSIS/CoreValidation \
+		--exclude=CMSIS/Documentation \
+		--exclude=CMSIS/Driver \
+		--exclude=.git \
+		--exclude=.gitignore \
+		--exclude=gen_pack.sh \
+		--exclude=.devcontainer \
+		--transform "s|CMSIS_6|CMSIS|" \
+		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	@echo ----------------------------------------------------------
 
+cmsis_dsp: PACKAGE_NAME := "CMSIS_DSP"
+cmsis_dsp: PACKAGE_FOLDER := CMSIS-DSP
+cmsis_dsp: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags |  sed 's/^v//')
+cmsis_dsp: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
+cmsis_dsp: clean print_info
+	@echo ----------------------------------------------------------
+	@echo "Packaging module."
+	@tar --mtime='$(PACKAGE_DATE)' \
+		--exclude=.github \
+		--exclude=cmsisdsp \
+		--exclude=Documentation \
+		--exclude=dsppp \
+		--exclude=Examples \
+		--exclude=PythonWrapper \
+		--exclude=Scripts \
+		--exclude=Testing \
+		--exclude=.git \
+		--exclude=.gitignore \
+		--exclude=CMakeLists.txt \
+		--exclude=gen_pack.sh \
+		--exclude=MANIFEST.in \
+		--exclude=pyproject.toml \
+		--exclude=PythonWrapper_README.md \
+		--exclude=setup.py \
+		--exclude=vcpkg-configuration.json \
+		--transform "s|CMSIS-DSP|CMSIS_DSP|" \
+		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	@echo ----------------------------------------------------------
+
+cmsis_nn: PACKAGE_NAME := "CMSIS_NN"
+cmsis_nn: PACKAGE_FOLDER := CMSIS-NN
+cmsis_nn: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags |  sed 's/^v//')
+cmsis_nn: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
+cmsis_nn: clean print_info
+	@echo ----------------------------------------------------------
+	@echo "Packaging module."
+	@tar --mtime='$(PACKAGE_DATE)' \
+		--exclude=.github \
+		--exclude=Documentation \
+		--exclude=Examples \
+		--exclude=Tests \
+		--exclude=.git \
+		--exclude=.clang-format \
+		--exclude=.gitignore \
+		--exclude=check_pdsc.sh \
+		--exclude=check_version_and_date.sh \
+		--exclude=CMakeLists.txt \
+		--exclude=gen_pack.sh \
+		--transform "s|CMSIS-NN|CMSIS_NN|" \
+		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	@echo ----------------------------------------------------------
+
+cmsis5: PACKAGE_NAME := "CMSIS"
 cmsis5: PACKAGE_FOLDER := CMSIS_5
 cmsis5: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags)
 cmsis5: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
@@ -102,13 +175,13 @@ cmsis5: clean print_info
 		--exclude=*.scvd \
 		--transform "s|CMSIS_5|CMSIS|" \
 		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
-	$(MAKE) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
 	@echo ----------------------------------------------------------
 
 clean:
 	@echo ----------------------------------------------------------
 	@echo  Cleanup
-	-$(RM) $(PACKAGE_NAME)-*.tar.bz2 package_$(PACKAGE_NAME)_*.json test_package_$(PACKAGE_NAME)_*.json
+	-$(RM) CMSIS*-*.tar.bz2 package_CMSIS*_*.json test_package_CMSIS*_*.json
 	@echo ----------------------------------------------------------
 
 print_info:
@@ -126,5 +199,5 @@ postpackaging:
 	@echo "PACKAGE_CHKSUM      = $(PACKAGE_CHKSUM)"
 	@echo "PACKAGE_SIZE        = $(PACKAGE_SIZE)"
 	@echo "PACKAGE_FILENAME    = $(PACKAGE_FILENAME)"
-	@cat extras/package_index.json.template | sed s/%%VERSION%%/$(PACKAGE_VERSION)/ | sed s/%%FILENAME%%/$(PACKAGE_FILENAME)/ | sed s/%%CHECKSUM%%/$(PACKAGE_CHKSUM)/ | sed s/%%SIZE%%/$(PACKAGE_SIZE)/ > package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json
+	@cat extras/package_index.json.template | sed s/%%PACKAGENAME%%/$(PACKAGE_NAME)/ | sed s/%%VERSION%%/$(PACKAGE_VERSION)/ | sed s/%%FILENAME%%/$(PACKAGE_FILENAME)/ | sed s/%%CHECKSUM%%/$(PACKAGE_CHKSUM)/ | sed s/%%SIZE%%/$(PACKAGE_SIZE)/ > package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json
 	@echo "package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json created"
