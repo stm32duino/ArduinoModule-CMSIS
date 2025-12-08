@@ -63,13 +63,14 @@ cmsis6: clean print_info
 		--exclude=.devcontainer \
 		--transform "s|CMSIS_6|CMSIS|" \
 		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
-	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) CMSIS_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
 	@echo ----------------------------------------------------------
 
 cmsis_dsp: PACKAGE_NAME := "CMSIS_DSP"
 cmsis_dsp: PACKAGE_FOLDER := CMSIS-DSP
 cmsis_dsp: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags |  sed 's/^v//')
 cmsis_dsp: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
+cmsis_dsp: CMSIS_VERSION := $(shell git --git-dir=CMSIS_6/.git describe --tags |  sed 's/^v//')
 cmsis_dsp: clean print_info
 	@echo ----------------------------------------------------------
 	@echo "Packaging module."
@@ -93,13 +94,14 @@ cmsis_dsp: clean print_info
 		--exclude=vcpkg-configuration.json \
 		--transform "s|CMSIS-DSP|CMSIS_DSP|" \
 		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
-	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) CMSIS_VERSION=$(CMSIS_VERSION) --no-builtin-rules postpackaging -C .
 	@echo ----------------------------------------------------------
 
 cmsis_nn: PACKAGE_NAME := "CMSIS_NN"
 cmsis_nn: PACKAGE_FOLDER := CMSIS-NN
 cmsis_nn: PACKAGE_VERSION := $(shell git --git-dir=$(PACKAGE_FOLDER)/.git describe --tags |  sed 's/^v//')
 cmsis_nn: PACKAGE_DATE := $(firstword $(shell git --git-dir=$(PACKAGE_FOLDER)/.git log -1 --pretty=format:%ci))
+cmsis_nn: CMSIS_VERSION := $(shell git --git-dir=CMSIS_6/.git describe --tags |  sed 's/^v//')
 cmsis_nn: clean print_info
 	@echo ----------------------------------------------------------
 	@echo "Packaging module."
@@ -117,7 +119,7 @@ cmsis_nn: clean print_info
 		--exclude=gen_pack.sh \
 		--transform "s|CMSIS-NN|CMSIS_NN|" \
 		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
-	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) --no-builtin-rules postpackaging -C .
+	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) CMSIS_VERSION=$(CMSIS_VERSION) --no-builtin-rules postpackaging -C .
 	@echo ----------------------------------------------------------
 
 cmsis5: PACKAGE_NAME := "CMSIS"
@@ -199,5 +201,5 @@ postpackaging:
 	@echo "PACKAGE_CHKSUM      = $(PACKAGE_CHKSUM)"
 	@echo "PACKAGE_SIZE        = $(PACKAGE_SIZE)"
 	@echo "PACKAGE_FILENAME    = $(PACKAGE_FILENAME)"
-	@cat extras/package_index.json.template | sed s/%%PACKAGENAME%%/$(PACKAGE_NAME)/ | sed s/%%VERSION%%/$(PACKAGE_VERSION)/ | sed s/%%FILENAME%%/$(PACKAGE_FILENAME)/ | sed s/%%CHECKSUM%%/$(PACKAGE_CHKSUM)/ | sed s/%%SIZE%%/$(PACKAGE_SIZE)/ > package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json
+	@cat extras/package_index.json.template | sed s/%%PACKAGENAME%%/$(PACKAGE_NAME)/ | sed s/%%VERSION%%/$(PACKAGE_VERSION)/ | sed s/%%CMSISVERSION%%/$(CMSIS_VERSION)/ | sed s/%%FILENAME%%/$(PACKAGE_FILENAME)/ | sed s/%%CHECKSUM%%/$(PACKAGE_CHKSUM)/ | sed s/%%SIZE%%/$(PACKAGE_SIZE)/ > package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json
 	@echo "package_$(PACKAGE_NAME)_$(PACKAGE_VERSION)_index.json created"
