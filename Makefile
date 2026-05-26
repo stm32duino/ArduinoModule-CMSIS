@@ -83,6 +83,8 @@ cmsis_dsp: clean print_info
 		--exclude=PythonWrapper \
 		--exclude=Scripts \
 		--exclude=Testing \
+		--exclude=tools \
+		--exclude=zephyr \
 		--exclude=.git \
 		--exclude=.gitignore \
 		--exclude=CMakeLists.txt \
@@ -92,6 +94,9 @@ cmsis_dsp: clean print_info
 		--exclude=PythonWrapper_README.md \
 		--exclude=setup.py \
 		--exclude=vcpkg-configuration.json \
+		--exclude=vcpkg-neon-configuration.json \
+		--exclude=compile_commands.json \
+		--exclude=AGENTS.md \
 		--transform "s|CMSIS-DSP|CMSIS_DSP|" \
 		-cjf "$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.bz2" "$(PACKAGE_FOLDER)"
 	$(MAKE) PACKAGE_NAME=$(PACKAGE_NAME) PACKAGE_VERSION=$(PACKAGE_VERSION) CMSIS_VERSION=$(CMSIS_VERSION) --no-builtin-rules postpackaging -C .
